@@ -1,0 +1,9 @@
+[package]
+name = "game-of-life-web-assembly"
+version = "0.1.0"
+authors = ["Aish Raj Dahal <aish@aishraj.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
