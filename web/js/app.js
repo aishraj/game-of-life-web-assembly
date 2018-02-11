@@ -1,58 +1,67 @@
-fetch("life.wasm", {
-  cache: "no-cache"
-}).then(response =>
+let canvas = document.getElementById('canvas'); //Get the base canvas
+
+// Returns an object containing functions that can be called in from Rust.
+function imports() {
+  var context = canvas.getContext('2d');
+
+  function clear_screen() {
+    console.log("Clearing screen")
+    //Clear the screen, draw the blank grid with random cells here.
+  }
+
+  function draw_dead_cell(x,y) {
+    console.log("Drawing dead cell at", x, y);
+    //Draw the cell here
+  }
+
+  function draw_living_cell(x,y) {
+    console.log("Drawing living cell at", x, y);
+  }
+
+  let imports =  { clear_screen, draw_dead_cell, draw_living_cell };
+  return imports;
+}
+
+fetch('wasm/life.wasm').then(response => 
   response.arrayBuffer()
 ).then(bytes =>
-  WebAssembly.instantiate(bytes, {})
+  WebAssembly.instantiate(bytes, { env: imports() })
 ).then(results => {
-  let module = {};
+  let module = {}
   let mod = results.instance;
-  module.alloc = mod.exports.alloc;
-  module.dealloc = mod.exports.dealloc;
-  module.nextGeneration = mod.exports.next_generation;
-  module.clear = mod.exports.clear;
+  module.update_state = mod.exports.update_state;
+  module.resize = mod.exports.resize;
+  module.draw = mod.exports.draw;
 
-  let width = 1512;
-  let height = 1512;
-
-  let byteSize = width * height * 4;
-  let pointer = module.alloc(byteSize);
-  let buffer = new Uint8Array(mod.exports.memory.buffer, pointer, byteSize);
-
-  let button = document.getElementById("run-wasm");
-  let canvas = document.getElementById('screen');
-  if (canvas.getContext) {
-    let ctx = canvas.getContext('2d');
-
-    let pointer = module.alloc(byteSize);
-
-    let usub = new Uint8ClampedArray(mod.exports.memory.buffer, pointer, byteSize);
-    let img = new ImageData(usub, width, height);
-
-    let running = false;
-    let i = 0;
-    function step(timestamp) {
-      console.log("Stepping" ,i);
-      i += 1;
-      if (!running) return;
-      let usub = new Uint8ClampedArray(mod.exports.memory.buffer, pointer, byteSize);
-      let img = new ImageData(usub, width, height);
-      ctx.putImageData(img, 0, 0);
-      let nextGenerationPointer = module.nextGeneration(pointer, width, height);
-      pointer = nextGenerationPointer;
-      window.requestAnimationFrame(step);
-    }
-
-    function clearCanvasAndRestart() {
-      running = false;
-      window.requestAnimationFrame(function () {
-        ctx.clearRect(0, 0, width, height);
-        module.clear(pointer, width, height);
-        running = true;
-        window.requestAnimationFrame(step);
-      });
-    }
-
-    clearCanvasAndRestart();
+  //Resizing
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    module.resize(canvas.width, canvas.height); //Doing this would also bring the grid to its original state.
   }
+  window.addEventListener('resize', () => {
+    resize();
+  });
+
+  //Main "Game" loop
+  let start = null;
+  let prevTimestamp = null;
+  let drawAndUpdateState = (timestamp) => {
+    console.log("Current timestamp is", timestamp); //TODO Maybe get rid of this or display it in the canvas.
+    //Initialize state
+    if (!prevTimestamp) {
+      start = timestamp;
+      prevTimestamp = timestamp;
+      requestAnimationFrame(drawAndUpdateState);
+      return;
+    }
+
+    //We first draw and then update
+    module.draw();
+    module.update_state();
+    requestAnimationFrame(drawAndUpdateState);
+  };
+
+  resize();
+  drawAndUpdateState();
 });
