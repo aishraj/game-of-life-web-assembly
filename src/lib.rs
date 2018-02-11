@@ -37,7 +37,7 @@ pub extern "C" fn resize(width: c_int, height: c_int) {
     let game_state: &mut GameState = &mut DATA.lock().unwrap() ;
     let current_generation = &mut game_state.current_generation;
     for &(x,y) in random_living.iter() {
-        current_generation.set_living(x,y);
+        current_generation.set_living(y,x);
     }
 }
 
@@ -47,8 +47,8 @@ pub extern "C" fn draw() {
     let drawing_height = game_state.current_generation.size.height as i32;
     let drawing_width = game_state.current_generation.size.width as i32;
     unsafe { clear_screen() };
-    for i in 0..drawing_height {
-        for j in 0..drawing_width {
+    for i in 0..drawing_width {
+        for j in 0..drawing_height {
             if game_state.current_generation.is_living(i, j) {
                 unsafe { draw_living_cell(i, j); }
             } else {
@@ -64,9 +64,9 @@ pub extern "C" fn calculate_next_gen() {
     let current_generation = &mut game_state.current_generation;
     let next_generation = &mut game_state.next_generation;
     let drawing_height = current_generation.size.height as i32;
-    let drawing_width = current_generation.size.height as i32;
-    for x in 0..drawing_height {
-        for y in 0..drawing_width {
+    let drawing_width = current_generation.size.width as i32;
+    for x in 0..drawing_width {
+        for y in 0..drawing_height {
             let neighbour_count = current_generation.get_neighbour_count(x,y);
             let cell_state = current_generation.is_living(x, y);
             match neighbour_count {

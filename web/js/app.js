@@ -8,7 +8,7 @@ function imports() {
 
   function clear_screen() {
     //Clear the screen, draw the blank grid with random cells here.
-    context.clearRect(0, 0, 700, 700);
+    context.clearRect(0, 0, 1512, 512);
   }
 
   function draw_dead_cell(x,y) {
@@ -18,7 +18,6 @@ function imports() {
   }
 
   function draw_living_cell(x,y) {
-    console.log('Rendering living cell');
     context.beginPath();
     context.rect(x*8, y*8, 8, 8);
     context.fill();
@@ -43,9 +42,9 @@ fetch('wasm/life.wasm').then(response =>
   //Resizing
   function resize() {
     //TODO: Remove hardcoded values
-    canvas.width = 700;
-    canvas.height = 700;
-    module.resize(canvas.width, canvas.height); //Doing this would also bring the grid to its original state.
+    canvas.width = 1512;
+    canvas.height = 1512;
+    module.resize(64, 64); //Doing this would also bring the grid to its original state.
   }
   window.addEventListener('resize', () => {
     resize();
@@ -55,12 +54,13 @@ fetch('wasm/life.wasm').then(response =>
   let start = null;
   let prevTimestamp = null;
   let drawAndUpdateState = (timestamp) => {
-    console.log("Current timestamp is", timestamp); //TODO Maybe get rid of this or display it in the canvas.
+    //console.log("Current timestamp is", timestamp); //TODO Maybe get rid of this or display it in the canvas.
     //Initialize state
     if (!prevTimestamp) {
       start = timestamp;
       prevTimestamp = timestamp;
       window.requestAnimationFrame(drawAndUpdateState);
+      //setTimeout(function() {drawAndUpdateState(10);});
       return;
     }
 
@@ -69,6 +69,7 @@ fetch('wasm/life.wasm').then(response =>
     module.calculate_next_gen();
     module.update_state();
     window.requestAnimationFrame(drawAndUpdateState);
+    //setTimeout(function() {drawAndUpdateState(10);}, 100);
   };
 
   resize();
