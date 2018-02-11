@@ -1,29 +1,38 @@
 use models::size::Size;
 
 pub struct Grid {
-  state: Vec<Vec<bool>>, //State is a 2d vector of boolean representing the grid
-  pub size: Size
+    state: Vec<Vec<bool>>, //State is a 2d vector of boolean representing the grid
+    pub size: Size,
 }
 
 impl Grid {
     pub fn new(s: Size) -> Grid {
         Grid {
             state: create_nested_blanks(s.clone()),
-            size: s
+            size: s,
         }
     }
 
     pub fn is_living(&self, x: i32, y: i32) -> bool {
-      if x < 0 || x >= self.size.width || y < 0 || y >= self.size.height {
-          return false;
-      }
-      let x = x as usize;
-      let y = y as usize;
-      self.state[y][x]
+        if x < 0 || x >= self.size.width || y < 0 || y >= self.size.height {
+            return false;
+        }
+        let x = x as usize;
+        let y = y as usize;
+        self.state[y][x]
     }
 
     pub fn get_neighbour_count(&self, x: i32, y: i32) -> i32 {
-        let xy_pairs = [(-1,-1),(0, -1), (1, -1), (-1,0), (1,0), (-1,1), (0,1), (1,1)];
+        let xy_pairs = [
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+        ];
         let c = xy_pairs.into_iter().fold(0, |cnt, &(x_off, y_off)| {
             let res = if self.is_living(x + x_off, y + y_off) {
                 cnt + 1
