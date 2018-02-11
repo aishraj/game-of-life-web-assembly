@@ -3,19 +3,25 @@ let canvas = document.getElementById('canvas'); //Get the base canvas
 // Returns an object containing functions that can be called in from Rust.
 function imports() {
   var context = canvas.getContext('2d');
+  context.strokeStyle = '#e1e1e1';
+  context.fillStyle = 'cadetblue';
 
   function clear_screen() {
-    console.log("Clearing screen")
     //Clear the screen, draw the blank grid with random cells here.
+    context.clearRect(0, 0, 700, 700);
   }
 
   function draw_dead_cell(x,y) {
-    console.log("Drawing dead cell at", x, y);
-    //Draw the cell here
+    context.beginPath();
+    context.rect(x*8, y*8, 8, 8);
+    context.stroke();
   }
 
   function draw_living_cell(x,y) {
-    console.log("Drawing living cell at", x, y);
+    console.log('Rendering living cell');
+    context.beginPath();
+    context.rect(x*8, y*8, 8, 8);
+    context.fill();
   }
 
   let imports =  { clear_screen, draw_dead_cell, draw_living_cell };
@@ -30,13 +36,15 @@ fetch('wasm/life.wasm').then(response =>
   let module = {}
   let mod = results.instance;
   module.update_state = mod.exports.update_state;
+  module.calculate_next_gen = mod.exports.calculate_next_gen;
   module.resize = mod.exports.resize;
   module.draw = mod.exports.draw;
 
   //Resizing
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    //TODO: Remove hardcoded values
+    canvas.width = 700;
+    canvas.height = 700;
     module.resize(canvas.width, canvas.height); //Doing this would also bring the grid to its original state.
   }
   window.addEventListener('resize', () => {
@@ -52,14 +60,15 @@ fetch('wasm/life.wasm').then(response =>
     if (!prevTimestamp) {
       start = timestamp;
       prevTimestamp = timestamp;
-      requestAnimationFrame(drawAndUpdateState);
+      window.requestAnimationFrame(drawAndUpdateState);
       return;
     }
 
     //We first draw and then update
     module.draw();
+    module.calculate_next_gen();
     module.update_state();
-    requestAnimationFrame(drawAndUpdateState);
+    window.requestAnimationFrame(drawAndUpdateState);
   };
 
   resize();
